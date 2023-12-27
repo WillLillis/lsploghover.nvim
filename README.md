@@ -10,7 +10,7 @@ time consuming and annoying.
 
 ### The Solution
 
-This plugin streams the above process. Any logs of interest can be marked by
+This plugin streamlines the above process. Any logs of interest can be marked by
 prepending the relevant text with the log key (the default is `LSPLOGHOVER`) and
 then wrapping the text with angle brackets. For example, 
 
@@ -33,7 +33,16 @@ buffer with `:lua require("lsploghover").show_logs()`.
 
 - Install lsploghover like any other Neovim plugin
     - For example, with [packer.nvim](https://github.com/wbthomason/packer.nvim)
-    : `'use WillLillis/lsploghover'`
+    : `'use WillLillis/lsploghover.nvim'`. In `after/plugin/lsploghover.lua`, I 
+    have
+    ```
+    local log = require("lsploghover")
+
+    vim.keymap.set('n', '<leader>st', function() log.start() end)
+    vim.keymap.set('n', '<leader>sh', function() log.show_logs() end)
+
+    log.setup()
+    ```
 
 ### TODO
 
