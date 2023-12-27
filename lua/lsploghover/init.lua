@@ -1,17 +1,29 @@
 -- Not super sure how globals work/ why this is needed
-local default_log_key = "<<LSPLOGHOVER>>"
+local default_log_key = "LSPLOGHOVER"
 Log_key = Log_key or default_log_key
 Log_path = Log_path or require("vim.lsp.log").get_filename()
 Max_win_height = Max_win_height or 20
 Start_time = Start_time or nil
 
--- delete any and all characters up through the Log key
+-- Extract the relevant part from the log
 local function clean_log(log)
-    local match_str = ".+" .. Log_key
-    return string.gsub(log, match_str, "")
+    local cleaned_logs = {}
+    local match_str = Log_key .. "%b<>"
+    local start_idx, end_idx = string.find(log, match_str)
+    -- Sometimes multiple logs get flushed together, take care of that here
+    while start_idx and end_idx do
+        local captured = string.sub(log, start_idx, end_idx) -- sub string we captured
+        captured = string.gsub(captured, Log_key .. "<", "") -- strip off marking from start 
+        captured = string.sub(captured, 1, #captured - 1) -- strip off marking from end
+        cleaned_logs[#cleaned_logs + 1] = captured
+        start_idx, end_idx = string.find(log, match_str, end_idx)
+    end
+
+    return cleaned_logs
 end
 
 local function extract_timestamp(log)
+    -- yyyy-mm-dd hh:mm:ss
     local match_str = "%d%d%d%d%-%d%d%-%d%d %d%d:%d%d:%d%d"
     local start_idx, end_idx = string.find(log, match_str)
     if (not start_idx) or (not end_idx) then
@@ -70,7 +82,10 @@ local function get_processed_logs()
     for line in file:lines() do
         if log_after_start(line) then
             if string.find(line, Log_key, nil, true) then
-                filtered_logs[#filtered_logs + 1] = clean_log(line)
+                local cleaned_logs = clean_log(line)
+                for _, cleaned in ipairs(cleaned_logs) do
+                    filtered_logs[#filtered_logs+1] = cleaned
+                end
             end
         end
     end
@@ -82,15 +97,6 @@ local function get_processed_logs()
     end
 
     return filtered_logs
-end
-
-local function get_logs()
-    local contents = get_processed_logs()
-    if contents == nil then
-        return nil
-    end
-
-    return contents
 end
 
 local M = {}
@@ -117,7 +123,7 @@ M.setup = function(opts)
 end
 
 M.show_logs = function()
-    local logs = get_logs()
+    local logs = get_processed_logs()
     if logs == nil then
         return
     end

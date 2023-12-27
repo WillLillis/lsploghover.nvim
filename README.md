@@ -10,19 +10,34 @@ time consuming and annoying.
 
 ### The Solution
 
-This plugin streams the above process. Any logs of interest can be marked with a
-special string (the default is `[[LSPLOGHOVER]]`), or the plugin can be
-configured to match a substring already in a log statement of interest. Upon 
-opening a buffer to test, one can simply:
+This plugin streams the above process. Any logs of interest can be marked by
+prepending the relevant text with the log key (the default is `LSPLOGHOVER`) and
+then wrapping the text with angle brackets. For example, 
 
-- Start the plugin with `:lua require("lsploghover").start()`
+`log("Some important info");`
+
+could be marked by changing the line to
+
+`log("LSPLOGHOVER<Some important info>");`
+
+Upon opening a buffer to test, one can then simply:
+
+- Start the plugin with `:lua require("lsploghover").start()`.
+    - Calling `start()` will ensure that only logs with timestamps after that point
+    in time will be displayed. Not calling start will allow all marked logs to
+    be shown.
 - Have any specially marked logs appear in a hover window over the current
-buffer, checking with `:lua require("lsploghover").show_logs()`
+buffer with `:lua require("lsploghover").show_logs()`.
+
+### Installation
+
+- Install lsploghover like any other Neovim plugin
+    - For example, with [packer.nvim](https://github.com/wbthomason/packer.nvim)
+    : `'use WillLillis/lsploghover'`
 
 ### TODO
 
-- Look into taking advantage of more advanced log marking beyond a simple
-substring check
 - Figure out how to enable text wrapping in the hover window without using the
-deprectated `nvim_win_set_option()`
-- Add install instructions and an example gif to the README
+deprectated `nvim_win_set_option()` function.
+- Add an example gif to the README.
+- Further testing to work out bugs.
