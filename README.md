@@ -21,7 +21,8 @@ buffer, checking with `:lua require("lsploghover").show_logs()`
 
 ### TODO
 
-- Add time stamp filtering, so that any logs from before the call to `start()`
-don't appear in the hover window
 - Look into taking advantage of more advanced log marking beyond a simple
 substring check
+- Figure out how to enable text wrapping in the hover window without using the
+deprectated `nvim_win_set_option()`
+- Add install instructions and an example gif to the README
