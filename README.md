@@ -29,13 +29,20 @@ Upon opening a buffer to test, one can then simply:
 - Have any specially marked logs appear in a hover window over the current
 buffer with `:lua require("lsploghover").show_logs()`.
 
+### Demo
+
+The gif below shows a basic use of the plugin while debugging
+[asm-lsp](https://github.com/bergercookie/asm-lsp/tree/master).
+
+![](https://github.com/WillLillis/lsploghover.nvim/blob/main/demo.gif)
+
 ### Installation
 
 - Install lsploghover like any other Neovim plugin
     - For example, with [packer.nvim](https://github.com/wbthomason/packer.nvim)
     : `'use WillLillis/lsploghover.nvim'`. In `after/plugin/lsploghover.lua`, I 
     have
-    ```
+    ```lua
     local log = require("lsploghover")
 
     vim.keymap.set('n', '<leader>st', function() log.start() end)
@@ -48,5 +55,4 @@ buffer with `:lua require("lsploghover").show_logs()`.
 
 - Figure out how to enable text wrapping in the hover window without using the
 deprectated `nvim_win_set_option()` function.
-- Add an example gif to the README.
 - Further testing to work out bugs.
