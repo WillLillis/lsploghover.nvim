@@ -53,6 +53,4 @@ The gif below shows a basic use of the plugin while debugging
 
 ### TODO
 
-- Figure out how to enable text wrapping in the hover window without using the
-deprectated `nvim_win_set_option()` function.
 - Further testing to work out bugs.

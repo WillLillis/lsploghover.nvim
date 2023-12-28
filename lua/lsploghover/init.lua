@@ -13,8 +13,8 @@ local function clean_log(log)
     -- Sometimes multiple logs get flushed together, take care of that here
     while start_idx and end_idx do
         local captured = string.sub(log, start_idx, end_idx) -- sub string we captured
-        captured = string.gsub(captured, Log_key .. "<", "") -- strip off marking from start 
-        captured = string.sub(captured, 1, #captured - 1) -- strip off marking from end
+        captured = string.gsub(captured, Log_key .. "<", "") -- strip off marking from start
+        captured = string.sub(captured, 1, #captured - 1)    -- strip off marking from end
         cleaned_logs[#cleaned_logs + 1] = captured
         start_idx, end_idx = string.find(log, match_str, end_idx)
     end
@@ -78,13 +78,15 @@ local function get_processed_logs()
         return nil
     end
 
-    local filtered_logs = {}
+    -- I don't understand why, but without an empty string, text wrapping
+    -- *doesn't* happen in the hover window when there's a single log
+    local filtered_logs = { "" }
     for line in file:lines() do
         if log_after_start(line) then
             if string.find(line, Log_key, nil, true) then
                 local cleaned_logs = clean_log(line)
                 for _, cleaned in ipairs(cleaned_logs) do
-                    filtered_logs[#filtered_logs+1] = cleaned
+                    filtered_logs[#filtered_logs + 1] = cleaned
                 end
             end
         end
@@ -92,7 +94,8 @@ local function get_processed_logs()
 
     file:close()
 
-    if next(filtered_logs) == nil then
+    -- If it just has the placeholder empty string, it's really empty
+    if #filtered_logs == 1 then
         return nil
     end
 
@@ -122,6 +125,9 @@ M.setup = function(opts)
     Start_time = nil
 end
 
+-- Show marked logs in a hover window, if there are any
+-- If Start_time is set, only logs that came after will be shown
+-- If Start_time isn't set, all marked logs will be shown
 M.show_logs = function()
     local logs = get_processed_logs()
     if logs == nil then
@@ -136,12 +142,12 @@ M.show_logs = function()
     local user_win = vim.api.nvim_get_current_win()
     local buf_handle = vim.api.nvim_create_buf(false, true)
 
-    -- TODO: Figure out how to get the window to wrap text without using deprecated API
     -- TODO: Look into making window "more temp", so it goes away on a cursor movement
     local win_width = vim.api.nvim_win_get_width(0)
+    local width = math.min(max_width, win_width)
     local opts = {
         relative = "editor",
-        width = math.min(max_width, win_width),
+        width = width,
         height = math.min(#logs, Max_win_height),
         row = 1,
         col = 1,
@@ -152,11 +158,14 @@ M.show_logs = function()
     }
 
     local win_handle = vim.api.nvim_open_win(buf_handle, true, opts)
+
+    vim.api.nvim_set_option_value("wrap", true, { win = win_handle })
     vim.api.nvim_set_current_win(win_handle)
     vim.api.nvim_put(logs, "l", true, true)
     vim.api.nvim_set_current_win(user_win)
 end
 
+-- Mark a start time to filter logs by
 M.start = function(log_key)
     if log_key ~= nil then
         Log_key = log_key
