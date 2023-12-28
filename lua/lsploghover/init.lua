@@ -4,6 +4,7 @@ Log_key = Log_key or default_log_key
 Log_path = Log_path or require("vim.lsp.log").get_filename()
 Max_win_height = Max_win_height or 20
 Start_time = Start_time or nil
+Hover_win_id = Hover_win_id or nil
 
 -- Extract the relevant part from the log
 local function clean_log(log)
@@ -104,6 +105,14 @@ end
 
 local M = {}
 
+-- Close the hover window
+M._close_hover_window = function(_, _)
+    if Hover_win_id and vim.api.nvim_win_is_valid(Hover_win_id) then
+        vim.api.nvim_win_close(Hover_win_id, true)
+    end
+    Hover_win_id = nil
+end
+
 M.setup = function(opts)
     if opts ~= nil then
         if opts.log_path == nil then
@@ -139,10 +148,13 @@ M.show_logs = function()
         max_width = math.max(max_width, #log)
     end
 
+    -- Commands to close the hover window once there's any cursor movement inside the user's buffer
+    vim.api.nvim_command('autocmd CursorMoved <buffer> lua require("lsploghover")._close_hover_window()')
+    vim.api.nvim_command('autocmd CursorMovedI <buffer> lua require("lsploghover")._close_hover_window()')
+
     local user_win = vim.api.nvim_get_current_win()
     local buf_handle = vim.api.nvim_create_buf(false, true)
 
-    -- TODO: Look into making window "more temp", so it goes away on a cursor movement
     local win_width = vim.api.nvim_win_get_width(0)
     local width = math.min(max_width, win_width)
     local opts = {
@@ -157,11 +169,13 @@ M.show_logs = function()
         title_pos = "center",
     }
 
-    local win_handle = vim.api.nvim_open_win(buf_handle, true, opts)
+    Hover_win_id = vim.api.nvim_open_win(buf_handle, true, opts)
 
-    vim.api.nvim_set_option_value("wrap", true, { win = win_handle })
-    vim.api.nvim_set_current_win(win_handle)
+    vim.api.nvim_set_option_value("wrap", true, { win = Hover_win_id })
+    vim.api.nvim_set_current_win(Hover_win_id)
     vim.api.nvim_put(logs, "l", true, true)
+
+
     vim.api.nvim_set_current_win(user_win)
 end
 
