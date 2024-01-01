@@ -5,9 +5,11 @@ Log_path = Log_path or require("vim.lsp.log").get_filename()
 Max_win_height = Max_win_height or 20
 Start_time = Start_time or nil
 Hover_win_id = Hover_win_id or nil
+Expand = Expand or true
 
 -- Extract the relevant part from the log
 local function clean_log(log)
+    local tab = string.rep(" ", vim.api.nvim_get_option_value("tabstop", { scope = "global" }))
     local cleaned_logs = {}
     local match_str = Log_key .. "%b<>"
     local start_idx, end_idx = string.find(log, match_str)
@@ -16,6 +18,10 @@ local function clean_log(log)
         local captured = string.sub(log, start_idx, end_idx) -- sub string we captured
         captured = string.gsub(captured, Log_key .. "<", "") -- strip off marking from start
         captured = string.sub(captured, 1, #captured - 1)    -- strip off marking from end
+        if Expand then
+            captured = string.gsub(captured, "\\n", "")
+            captured = string.gsub(captured, "\\t", tab)
+        end
         cleaned_logs[#cleaned_logs + 1] = captured
         start_idx, end_idx = string.find(log, match_str, end_idx)
     end
@@ -98,6 +104,8 @@ local function get_processed_logs()
     -- If it just has the placeholder empty string, it's really empty
     if #filtered_logs == 1 then
         return nil
+    elseif #filtered_logs > 2 then -- remove ductape empty line if we have enough logs to show
+        table.remove(filtered_logs, 1)
     end
 
     return filtered_logs
@@ -113,6 +121,7 @@ M._close_hover_window = function(_, _)
     Hover_win_id = nil
 end
 
+-- Not sure if I'm doing this right...
 M.setup = function(opts)
     if opts ~= nil then
         if opts.log_path == nil then
@@ -129,6 +138,12 @@ M.setup = function(opts)
 
         if opts.max_win_height ~= nil then
             Max_win_height = 20
+        end
+
+        if opts.expand ~= nil then
+            Expand = opts.expand
+        else
+            Expand = true
         end
     end
     Start_time = nil
@@ -174,7 +189,6 @@ M.show_logs = function()
     vim.api.nvim_set_option_value("wrap", true, { win = Hover_win_id })
     vim.api.nvim_set_current_win(Hover_win_id)
     vim.api.nvim_put(logs, "l", true, true)
-
 
     vim.api.nvim_set_current_win(user_win)
 end
